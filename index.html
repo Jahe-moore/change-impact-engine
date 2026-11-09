@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change Impact Engine</title>
+<meta name="description" content="When one part of a product changes, what else has to change? A working system that answers that in seconds instead of days, shown on an invented medical device.">
+<meta property="og:title" content="Change Impact Engine">
+<meta property="og:description" content="When one part of a product changes, what else has to change? A working system that answers that in seconds instead of days.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="img/review-screen.jpg">
+<meta name="author" content="Jake Moore">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+  html { font-size: 17px; }
+  .wrap { max-width: 1240px; margin-inline: auto; padding-inline: clamp(1rem, 4vw, 2.5rem); }
+  section { padding: 2.6rem 0; }
+  .white { background: var(--white); }
+  .navy { background: var(--navy); color: #fff; }
+  .navbar-links { margin-left: auto; }
+
+  /* hero */
+  .hero { padding: 3.2rem 0 2.8rem; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; line-height: 1.05; margin-bottom: 0.9rem; max-width: 18ch; }
+  .hero .lead { font-size: 1.15rem; line-height: 1.6; color: rgba(255,255,255,0.88); max-width: 56rem; margin-bottom: 1.4rem; }
+  .hero-actions .btn { padding: 0.75rem 1.3rem; font-size: 0.85rem; }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-top: 2rem; }
+  .fact { border: 1px solid rgba(255,255,255,0.16); border-radius: 6px; padding: 0.8rem 1rem; background: rgba(255,255,255,0.05); }
+  .fact b { display: block; font-family: 'League Spartan', sans-serif; font-size: 1.6rem; line-height: 1.1; }
+  .fact span { font-family: 'League Spartan', sans-serif; font-size: 0.8rem; color: rgba(255,255,255,0.8); }
+
+  h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--navy); margin-bottom: 0.8rem; max-width: 44ch; }
+  .navy h2 { color: #fff; }
+  .kicker { font-family: 'League Spartan', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--steel); display: block; margin-bottom: 0.4rem; }
+  .navy .kicker { color: var(--steel-light); }
+  p { max-width: 62rem; margin-bottom: 0.9rem; }
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .card:hover { transform: none; }
+  .card h3 { font-size: 1.05rem; color: var(--navy); margin-bottom: 0.45rem; }
+  .card p { font-size: 0.92rem; margin-bottom: 0.5rem; }
+  .card p:last-child { margin-bottom: 0; }
+  .navy .card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #fff; box-shadow: none; }
+  .navy .card h3 { color: #fff; }
+  .navy .card p { color: rgba(255,255,255,0.85); }
+
+  /* the story timeline */
+  .timeline { list-style: none; display: grid; gap: 0.6rem; margin-top: 1rem; }
+  .timeline li { display: grid; grid-template-columns: 7.5rem 1fr; gap: 1rem; background: var(--white); border: 1px solid var(--border);
+    border-left: 4px solid var(--orange); border-radius: 0 6px 6px 0; padding: 0.75rem 1rem; }
+  .timeline .when { font-family: 'League Spartan', sans-serif; font-weight: 700; color: var(--orange); font-size: 0.95rem; }
+  .timeline p { margin: 0; font-size: 0.95rem; }
+
+  /* the impact chain */
+  .chain { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 1.4rem; align-items: start; }
+  .link { position: relative; padding: 0 1.1rem 0 0; }
+  .link:not(:last-child)::after { content: ""; position: absolute; right: 0.15rem; top: 2.2rem; width: 0.6rem; height: 0.6rem;
+    border-top: 3px solid var(--steel); border-right: 3px solid var(--steel); transform: rotate(45deg); }
+  .link .step { font-family: 'League Spartan', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--steel); display: block; margin-bottom: 0.5rem; }
+  .chip { display: block; font-family: 'League Spartan', sans-serif; font-weight: 600; font-size: 0.92rem; border-radius: 4px;
+    padding: 0.45rem 0.6rem; margin-bottom: 0.4rem; line-height: 1.25; }
+  .chip small { display: block; font-family: 'Libre Baskerville', serif; font-weight: 400; font-size: 0.74rem; margin-top: 0.15rem; }
+  .chip-change { background: var(--orange); color: #fff; }
+  .chip-part   { background: var(--orange-bg); color: #7a4b05; }
+  .chip-req    { background: var(--steel-light); color: var(--navy); }
+  .chip-test   { background: var(--green-bg); color: var(--green); }
+  .chip-who    { background: var(--light-gray); color: var(--charcoal); }
+
+  /* compare table */
+  .compare { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .compare th { font-family: 'League Spartan', sans-serif; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: left; padding: 0.7rem 0.9rem; background: var(--light-gray); color: var(--steel); border-bottom: 2px solid var(--border); }
+  .compare td { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--border); font-size: 0.93rem; vertical-align: top; }
+  .compare tr:last-child td { border-bottom: 0; }
+  .compare td:first-child { font-family: 'League Spartan', sans-serif; font-weight: 700; color: var(--navy); width: 22%; }
+  .compare td.today { color: var(--red); }
+  .compare td.engine { color: var(--green); }
+
+  figure img { border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 8px 30px rgba(15,29,54,0.12); }
+  figure { margin-top: 1rem; }
+  .shot-notes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-top: 1rem; }
+  .shot-notes div { border-top: 3px solid var(--steel); padding-top: 0.5rem; font-size: 0.88rem; }
+  .shot-notes b { display: block; font-family: 'League Spartan', sans-serif; color: var(--navy); }
+
+  .term { font-family: 'League Spartan', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; color: var(--steel);
+    text-transform: uppercase; display: block; margin-bottom: 0.3rem; }
+  .money { width: 100%; border-collapse: collapse; }
+  .money td { padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 0.93rem; }
+  .money td:last-child { text-align: right; font-family: 'League Spartan', sans-serif; font-weight: 700; color: var(--navy); white-space: nowrap; padding-left: 1rem; }
+  .money tr.total td { border-bottom: 0; font-size: 1rem; }
+  .money tr.total td:last-child { color: var(--green); font-size: 1.25rem; }
+  .callout { max-width: none; }
+  ol.plan { list-style: none; counter-reset: s; display: grid; gap: 0.6rem; }
+  ol.plan li { counter-increment: s; display: grid; grid-template-columns: 2.2rem 1fr; gap: 0.8rem; align-items: start; }
+  ol.plan li::before { content: counter(s); background: var(--navy); color: #fff; font-family: 'League Spartan', sans-serif; font-weight: 700;
+    width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; }
+  ol.plan b { font-family: 'League Spartan', sans-serif; color: var(--navy); }
+  .done li::marker, .todo li::marker { color: var(--steel); }
+  ul.plain { padding-left: 1.1rem; font-size: 0.93rem; }
+  ul.plain li { margin-bottom: 0.35rem; }
+  footer { background: var(--navy-dark); color: rgba(255,255,255,0.75); padding: 1.4rem 0; font-family: 'League Spartan', sans-serif; font-size: 0.85rem; }
+  footer a { color: #fff; }
+
+  @media (max-width: 1000px) {
+    .chain { grid-template-columns: 1fr; gap: 1.1rem; }
+    .link { padding: 0; }
+    .link:not(:last-child)::after { right: 50%; top: auto; bottom: -0.9rem; transform: rotate(135deg); }
+    .cols-4, .shot-notes, .facts { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 760px) {
+    .cols-2, .cols-3 { grid-template-columns: 1fr; }
+    .timeline li { grid-template-columns: 1fr; gap: 0.2rem; }
+    .compare td:first-child { width: auto; }
+    .navbar-links { display: none; }
+  }
+  @media (max-width: 480px) { .cols-4, .shot-notes, .facts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="#top">Change Impact Engine</a>
+    <ul class="navbar-links">
+      <li><a href="#story">The problem</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#inside">Under the hood</a></li>
+      <li><a href="#worth">What it's worth</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="navy hero" id="top">
+  <div class="wrap">
+    <span class="kicker">A working system, built on an invented medical device</span>
+    <h1>When one part changes, what else has to change?</h1>
+    <p class="lead">Companies that build complicated products ask that question every week. Today it takes emails, spreadsheets and a meeting to answer. I built a system that answers it in seconds, sends the change to the right people to sign off, and keeps a record nobody can quietly rewrite.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#story">See the problem</a>
+      <a class="btn btn-secondary" href="https://github.com/Jahe-moore/change-impact-engine">Read the code</a>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>3</b><span>separate systems connected</span></div>
+      <div class="fact"><b>Seconds</b><span>to answer, instead of days</span></div>
+      <div class="fact"><b>13</b><span>automated tests, all passing</span></div>
+      <div class="fact"><b>Runs today</b><span>on a laptop or in Docker</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="story">
+  <div class="wrap">
+    <span class="kicker">The problem, as a story</span>
+    <h2>A supplier stops making one small sensor.</h2>
+    <p>Picture a company that makes infusion pumps, the machines in a hospital that push medicine through an IV line at a set speed. Inside each pump is a small pressure sensor. It watches the IV line, so the pump can sound an alarm if the line gets blocked.</p>
+    <p>One morning the supplier says they are discontinuing that sensor. The company has to switch to a new one. Here is how that usually goes.</p>
+    <ol class="timeline">
+      <li><span class="when">Monday</span><p>An engineer files a change request: "Replace the pressure sensor with one from a new supplier."</p></li>
+      <li><span class="when">Monday</span><p>The coordinator emails the leads for electrical, firmware, mechanical and testing: "What does this affect on your side?"</p></li>
+      <li><span class="when">Tuesday to Thursday</span><p>Each lead digs through their own tool and replies with a spreadsheet. Each one sees only their own piece.</p></li>
+      <li><span class="when">Next week</span><p>Someone merges the answers, books a review meeting and starts chasing signatures.</p></li>
+      <li><span class="when">Months later</span><p>An auditor asks why the blockage-alarm test was never run again on the new sensor. Nobody connected the two.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="navy">
+  <div class="wrap">
+    <span class="kicker">Why it's hard</span>
+    <h2>The answer is split across three tools that don't talk to each other.</h2>
+    <div class="cols-3" style="margin-top:1.2rem">
+      <div class="card"><h3>What the product must do</h3><p>The requirements. "Check the IV line pressure at least 10 times a second." Owned by the systems engineers.</p></div>
+      <div class="card"><h3>What the product is made of</h3><p>The parts list. The sensor sits on the control board, and the control board sits inside the pump. Owned by the electrical and mechanical teams.</p></div>
+      <div class="card"><h3>How each promise is proven</h3><p>The tests. "Block the line and time how fast the alarm goes off." Owned by the test team.</p></div>
+    </div>
+    <p style="margin-top:1.2rem;color:rgba(255,255,255,0.88)">The connections between those three live in people's heads and old spreadsheets. When one person forgets a connection, a test that should have been re-run gets skipped. In medical devices, the FDA expects every one of these reviews to be documented and traceable, so a missed connection is a real problem, not just a slow one.</p>
+  </div>
+</section>
+
+<section class="white" id="how">
+  <div class="wrap">
+    <span class="kicker">How it works</span>
+    <h2>Same sensor change. The system follows every connection for you.</h2>
+    <p>Every connection is stored once, in one place: this part sits inside that board, this part is what makes that requirement true, this test checks that board. When something changes, the system walks those connections out from the change and collects everything it reaches.</p>
+    <div class="chain">
+      <div class="link"><div class="card"><span class="step">1. The change</span>
+        <span class="chip chip-change">Pressure sensor<small>New supplier</small></span></div></div>
+      <div class="link"><div class="card"><span class="step">2. What it sits inside</span>
+        <span class="chip chip-part">Control board<small>holds the sensor</small></span>
+        <span class="chip chip-part">The whole pump<small>holds the board</small></span></div></div>
+      <div class="link"><div class="card"><span class="step">3. What it has to do</span>
+        <span class="chip chip-req">Check pressure 10 times a second<small>the sensor is how the pump does this</small></span></div></div>
+      <div class="link"><div class="card"><span class="step">4. What to test again</span>
+        <span class="chip chip-test">Blockage alarm test<small>runs on the control board</small></span>
+        <span class="chip chip-test">Full pump check<small>runs on the whole pump</small></span></div></div>
+      <div class="link"><div class="card"><span class="step">5. Who signs off</span>
+        <span class="chip chip-who">Electrical lead</span><span class="chip chip-who">Firmware lead</span>
+        <span class="chip chip-who">Mechanical lead</span><span class="chip chip-who">Test lead</span>
+        <span class="chip chip-who">Configuration manager</span></div></div>
+    </div>
+
+    <h2 style="margin-top:2.6rem">What changes for the people involved</h2>
+    <table class="compare">
+      <thead><tr><th></th><th>Today</th><th>With the engine</th></tr></thead>
+      <tbody>
+        <tr><td>Finding what's affected</td><td class="today">Four people search four tools and reply over a few days</td><td class="engine">Found the moment the change is filed, with the reason for each item</td></tr>
+        <tr><td>Who has to approve</td><td class="today">Whoever the coordinator remembers to email</td><td class="engine">Exactly the owners of the affected items, plus configuration management</td></tr>
+        <tr><td>Tests to run again</td><td class="today">Depends on someone remembering the connection</td><td class="engine">Listed on the change, so they can't be skipped quietly</td></tr>
+        <tr><td>If a part changes in a tool</td><td class="today">Nothing happens until someone notices</td><td class="engine">A review opens by itself</td></tr>
+        <tr><td>The paper trail</td><td class="today">Scattered across email and spreadsheets</td><td class="engine">One log, and any edit to it is detected</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <span class="kicker">The working screen</span>
+    <h2>One page to review a change.</h2>
+    <p>This is the real app running the sensor example. Every row says what the item is, why it is affected, and who owns it. The short ID on the right is the code an engineering tool would use.</p>
+    <figure><a href="img/review-screen.jpg"><img src="img/review-screen.jpg" width="1440" height="820" alt="The review page for the pressure sensor change: one requirement, two assemblies and two tests to re-run, five approvers with three approved, and the change log."></a></figure>
+    <div class="shot-notes">
+      <div><b>Top banner</b>The change, its status and the counts: 1 requirement, 2 parts, 2 tests to re-run, 3 of 5 sign-offs.</div>
+      <div><b>What this change affects</b>Every affected item, why it's affected, how many steps away it is, and who owns it.</div>
+      <div><b>Sign-offs</b>Only the people the change was sent to can approve it, and each person votes once.</div>
+      <div><b>Change log</b>Every action, who did it and when. The green badge at the top means nobody has edited the history.</div>
+    </div>
+  </div>
+</section>
+
+<section class="white" id="inside">
+  <div class="wrap">
+    <span class="kicker">Under the hood</span>
+    <h2>Built the way a company would need it to work.</h2>
+    <p>The demo is small, but each piece solves a problem a real company would hit. Each card names the technique once, then says what it does.</p>
+    <div class="cols-3" style="margin-top:1rem">
+      <div class="card"><span class="term">Three separate systems</span><h3>Like the tools a company already has</h3><p>Requirements, parts and tests each run as their own service with their own data. They only meet through the connections, the same way a real company's tools stay separate.</p></div>
+      <div class="card"><span class="term">One table of connections</span><h3>The map nobody had</h3><p>Every "sits inside", "makes this true" and "is tested by" link is stored in one place. A single database query follows the links outward and records how far away each item is.</p></div>
+      <div class="card"><span class="term">Outbox events</span><h3>Changes never get lost</h3><p>When a part is edited, the edit and a "this changed" message are saved together. Either both happen or neither does, so the system never misses a change or reacts to one that didn't happen.</p></div>
+      <div class="card"><span class="term">Safe to retry</span><h3>No double work after a crash</h3><p>Each message is marked once it's handled. If it arrives twice, the second copy is skipped. If it keeps failing, it is set aside with the error after three tries instead of blocking everything else.</p></div>
+      <div class="card"><span class="term">Approval routing</span><h3>The right people, nobody extra</h3><p>The owner of the changed part, the owner of every affected item, and configuration management. One rejection stops the change.</p></div>
+      <div class="card"><span class="term">Tamper-evident log</span><h3>A history you can trust</h3><p>The database refuses edits and deletes on the log. Each entry is also sealed with a fingerprint of the one before it, so changing any old entry breaks the chain and the check catches it.</p></div>
+    </div>
+    <div class="cols-2" style="margin-top:1.2rem">
+      <div class="card"><h3>Tested, not just demoed</h3>
+        <ul class="plain">
+          <li>The sensor example returns exactly the five items above</li>
+          <li>A full change goes from filed to approved, and one rejection stops it</li>
+          <li>People who aren't approvers can't vote, and nobody votes twice</li>
+          <li>Editing a part opens a review by itself</li>
+          <li>A repeated message is not handled twice; a failing one is set aside after three tries</li>
+          <li>The log refuses edits, and the fingerprint check catches tampering</li>
+        </ul></div>
+      <div class="card"><h3>Tools</h3>
+        <p>Python and FastAPI for the services. SQLite with recursive SQL for the connections. pytest for the 13 tests. Docker, set up to run as a locked-down, non-admin container.</p>
+        <p>Next on the list: PostgreSQL, a real message queue on AWS, sign-in for approvers, and an automated build that scans for security issues.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="worth">
+  <div class="wrap">
+    <span class="kicker">What it's worth</span>
+    <h2>A rough model for a mid-size device maker.</h2>
+    <p>These are my estimates, not measured numbers. They're here to show the size of the problem. Swap in a real company's numbers and the math works the same way.</p>
+    <div class="cols-2" style="margin-top:1rem">
+      <div class="card"><h3>What I assumed</h3>
+        <table class="money">
+          <tr><td>Changes a year (60 a month)</td><td>720</td></tr>
+          <tr><td>Hours to review one change by hand</td><td>6</td></tr>
+          <tr><td>Hours with the engine, to check its answer</td><td>1</td></tr>
+          <tr><td>Cost of an engineering hour</td><td>$75</td></tr>
+          <tr><td>Hand reviews that miss a test</td><td>2%</td></tr>
+        </table></div>
+      <div class="card"><h3>What that adds up to, each year</h3>
+        <table class="money">
+          <tr><td>Hours saved: 720 changes x 5 hours</td><td>3,600 hours</td></tr>
+          <tr><td>Cost saved: 3,600 x $75</td><td>$270,000</td></tr>
+          <tr class="total"><td>Missed re-tests caught: 2% of 720</td><td>About 14</td></tr>
+        </table>
+        <p style="margin-top:0.8rem">The hours are the easy number to see. The 14 missed tests are the bigger deal: each one could turn into an audit finding or a problem with a pump in a hospital.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="white">
+  <div class="wrap">
+    <span class="kicker">If a company wanted to try it</span>
+    <h2>Start small and prove it first.</h2>
+    <ol class="plan" style="margin-top:1rem">
+      <li><div><b>Map one product line.</b> Load the connections for one product only. Nothing changes about how anyone works yet.</div></li>
+      <li><div><b>Run it side by side for a month.</b> Let the change board work the normal way, and compare its answers with the engine's. Every difference is either a gap in the map or something the board missed.</div></li>
+      <li><div><b>Turn on routing and the log.</b> Once people trust the answers, let the engine send changes to approvers and keep the record.</div></li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Change Impact Engine &middot; built by Jake Moore &middot; the IP-200 pump and all its data are invented &middot; <a href="https://github.com/Jahe-moore/change-impact-engine">Code on GitHub</a></div>
+</footer>
+</body>
+</html>
