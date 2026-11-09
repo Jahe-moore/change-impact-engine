@@ -4,210 +4,259 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Change Impact Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/base.css">
 <style>
-  :root {
-    --bg: #f5f6f8; --panel: #ffffff; --ink: #14171c; --mute: #5d6573; --line: #dde1e7;
-    --req: #2f6fd6; --prt: #c2711b; --tst: #2a9461; --ok: #2a9461; --bad: #c9423a; --wait: #8a8f99;
-    --accent: #0e2a47;
+  .wrap { max-width: 1600px; margin-inline: auto; padding: 1rem clamp(1rem, 3vw, 2.5rem) 2rem; }
+  .hero { padding: 1.4rem 0 1.2rem; }
+  .hero .wrap { padding-top: 0; padding-bottom: 0; }
+  .hero-head { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+  .hero-title { font-size: clamp(1.5rem, 3vw, 2.1rem); margin: 0; }
+  .stat-pills { margin-bottom: 0; }
+  .stat-pill strong { font-size: 1.15rem; }
+  .stat-pill--wide { max-width: 34rem; }
+  .stat-pill--wide strong { font-size: 0.88rem; }
+  .navbar-right { margin-left: auto; display: flex; align-items: center; gap: 0.8rem; }
+  .navbar-links { margin-left: 0; }
+  .layout { display: grid; grid-template-columns: minmax(300px, 1fr) 2.6fr; gap: 1rem; align-items: start; }
+  .stack { display: grid; gap: 1rem; }
+  .card:hover { transform: none; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.9rem 0.5rem; }
+  .card-head .card-label { margin: 0; }
+  .card-head .count { font-family: 'League Spartan', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--navy); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field { margin-bottom: 0.7rem; }
+  .field label { display: block; font-family: 'League Spartan', sans-serif; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); margin-bottom: 0.25rem; }
+  .field select, .field input, .field textarea { width: 100%; padding: 0.45rem 0.55rem; border: 1px solid var(--border);
+    border-radius: 3px; background: var(--white); color: var(--text); font-size: 0.85rem; }
+  .field textarea { min-height: 3.6rem; resize: vertical; }
+  .actions { display: flex; gap: 0.5rem; }
+  .tag { display: inline-block; font-family: 'League Spartan', sans-serif; font-weight: 700; font-size: 0.72rem;
+    letter-spacing: 0.04em; padding: 0.2rem 0.45rem; border-radius: 3px; white-space: nowrap; }
+  .tag-requirements { background: var(--steel-light); color: var(--navy); }
+  .tag-parts        { background: var(--orange-bg);   color: #8a5506; }
+  .tag-tests        { background: var(--green-bg);    color: var(--green); }
+  .state { display: inline-block; font-family: 'League Spartan', sans-serif; font-weight: 700; font-size: 0.68rem;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.55rem; border-radius: 3px; }
+  .state-submitted, .state-pending, .state-preview { background: var(--light-gray); color: var(--charcoal); }
+  .state-in_review { background: var(--orange-bg); color: #8a5506; }
+  .state-approved  { background: var(--green-bg);  color: var(--green); }
+  .state-rejected  { background: var(--red-bg);    color: var(--red); }
+  .hero .state { box-shadow: 0 0 0 1px rgba(255,255,255,0.25); }
+  .audit-ok, .audit-bad { font-family: 'League Spartan', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em;
+    padding: 0.3rem 0.6rem; border-radius: 4px; white-space: nowrap; }
+  .audit-ok  { color: #fff; background: var(--green); }
+  .audit-bad { color: #fff; background: var(--red); }
+  .data-table td.num { font-family: 'League Spartan', sans-serif; font-weight: 700; text-align: center; }
+  .data-table td.mono, .mono { font-family: Consolas, 'Courier New', monospace; font-size: 0.78rem; }
+  .data-table tr.sys-start td { border-top: 2px solid var(--border); }
+  .data-table tr.sel td { background: var(--steel-light); }
+  .data-table tr.click { cursor: pointer; }
+  .via { color: var(--charcoal-mid); }
+  #audit td { font-size: 0.75rem; white-space: nowrap; padding-inline: 0.5rem; }
+  .err { color: var(--red); font-size: 0.8rem; min-height: 1.1rem; margin-top: 0.4rem; }
+  .card-body-pad { padding: 0.9rem; }
+  @media (max-width: 1100px) { .layout, .two { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) {
+    .navbar-links { display: none; }
+    .data-table th, .data-table td { padding: 0.4rem 0.45rem; }
+    .hide-sm { display: none; }
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1115; --panel: #1a1d24; --ink: #eef0f3; --mute: #9aa1ad; --line: #2e333d;
-      --req: #6ea1f2; --prt: #e9a256; --tst: #5cc58f; --ok: #5cc58f; --bad: #ef6b62; --accent: #9cc3ff; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--ink); }
-  header { display: flex; align-items: baseline; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
-  header h1 { margin: 0; font-size: 18px; }
-  header .sub { color: var(--mute); }
-  header .audit { margin-left: auto; font-size: 13px; }
-  main { display: grid; grid-template-columns: 320px 1fr; gap: 16px; padding: 16px 20px; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--mute); margin: 0 0 10px; }
-  label { display: block; font-size: 12px; color: var(--mute); margin: 8px 0 3px; }
-  select, input, textarea, button { font: inherit; color: inherit; }
-  select, input, textarea { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
-  textarea { resize: vertical; min-height: 54px; }
-  button { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
-  .row { display: flex; gap: 8px; margin-top: 10px; }
-  .crlist { list-style: none; margin: 0; padding: 0; }
-  .crlist li { padding: 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
-  .crlist li:hover { background: var(--bg); }
-  .crlist li.sel { border-color: var(--accent); }
-  .crlist .t { font-weight: 600; }
-  .crlist .m { color: var(--mute); font-size: 12px; }
-  .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; }
-  .s-submitted { color: var(--wait); } .s-in_review { color: var(--prt); } .s-approved { color: var(--ok); } .s-rejected { color: var(--bad); }
-  .tag { font: 600 12px ui-monospace, Consolas, monospace; padding: 1px 6px; border-radius: 4px; color: #fff; }
-  .tag.requirements { background: var(--req); } .tag.parts { background: var(--prt); } .tag.tests { background: var(--tst); }
-  .head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .head h3 { margin: 0; font-size: 20px; }
-  .desc { color: var(--mute); margin: 6px 0 12px; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
-  .stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
-  .stat b { display: block; font-size: 26px; line-height: 1.1; }
-  .stat span { color: var(--mute); font-size: 12px; }
-  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  @media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
-  .col h4 { margin: 0 0 8px; font-size: 13px; }
-  .col.requirements h4 { color: var(--req); } .col.parts h4 { color: var(--prt); } .col.tests h4 { color: var(--tst); }
-  .it { padding: 6px 8px; border-left: 3px solid var(--line); margin-bottom: 6px; background: var(--bg); border-radius: 0 6px 6px 0; }
-  .col.requirements .it { border-color: var(--req); } .col.parts .it { border-color: var(--prt); } .col.tests .it { border-color: var(--tst); }
-  .it .why { color: var(--mute); font-size: 12px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
-  @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } }
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
-  td.act { text-align: right; white-space: nowrap; }
-  td.act button { padding: 3px 9px; font-size: 12px; }
-  .ok { color: var(--ok); font-weight: 600; } .bad { color: var(--bad); font-weight: 600; } .wait { color: var(--wait); }
-  .log { font: 12px ui-monospace, Consolas, monospace; max-height: 260px; overflow: auto; }
-  .log div { padding: 3px 0; border-top: 1px solid var(--line); }
-  .log .h { color: var(--mute); }
-  .empty { color: var(--mute); padding: 40px; text-align: center; }
-  .err { color: var(--bad); font-size: 12px; min-height: 16px; margin-top: 6px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Change Impact Engine</h1>
-  <span class="sub">IP-200 infusion pump (demo product) &middot; requirements, parts and tests in one thread</span>
-  <span class="audit" id="auditBadge"></span>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="/">Change Impact Engine</a>
+    <div class="navbar-right">
+      <ul class="navbar-links">
+        <li><a class="active" href="/">Review</a></li>
+        <li><a href="/docs">API</a></li>
+      </ul>
+      <span id="auditBadge"></span>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="hero-eyebrow" id="eyebrow">IP-200 infusion pump</span>
+    <div class="hero-head"><h1 class="hero-title" id="heroTitle">Loading</h1><span id="heroState"></span></div>
+    <div class="stat-pills" id="heroStats"></div>
+  </div>
 </header>
-<main>
-  <aside>
-    <div class="card">
-      <h2>New change request</h2>
-      <label for="target">Item to change</label>
-      <select id="target"></select>
-      <label for="desc">What and why</label>
-      <textarea id="desc">Second-source the line pressure sensor (supplier end-of-life)</textarea>
-      <label for="who">Requested by</label>
-      <input id="who" value="Electrical Lead">
-      <div class="row">
-        <button class="primary" id="file">File change</button>
-        <button id="preview">Preview impact</button>
+
+<main class="wrap">
+  <div class="layout">
+    <div class="stack">
+      <section class="card">
+        <span class="card-label">New change request</span>
+        <div class="field"><label for="target">Item</label><select id="target"></select></div>
+        <div class="field"><label for="desc">Change and reason</label>
+          <textarea id="desc">Second-source the line pressure sensor (supplier end-of-life)</textarea></div>
+        <div class="field"><label for="who">Requested by</label><input id="who" value="Electrical Lead"></div>
+        <div class="actions">
+          <button class="btn btn-primary" id="file">File change</button>
+          <button class="btn btn-outline" id="preview">Preview impact</button>
+        </div>
+        <div class="err" id="err"></div>
+      </section>
+      <section class="card card--flush">
+        <div class="card-head"><span class="card-label">Change queue</span><span class="count" id="queueCount"></span></div>
+        <table class="data-table">
+          <thead><tr><th>CR</th><th>Item</th><th>State</th><th>Hits</th></tr></thead>
+          <tbody id="queue"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card card--flush">
+        <div class="card-head"><span class="card-label">Impact across systems</span><span class="count" id="impactCount"></span></div>
+        <div class="table-scroll"><table class="data-table">
+          <thead><tr><th>System</th><th>Item</th><th>Title</th><th class="hide-sm">Linked via</th><th>Hops</th><th class="hide-sm">Owner</th></tr></thead>
+          <tbody id="impact"></tbody>
+        </table></div>
+      </section>
+      <div class="two">
+        <section class="card card--flush">
+          <div class="card-head"><span class="card-label">Approvals</span><span class="count" id="apprCount"></span></div>
+          <table class="data-table">
+            <thead><tr><th>Approver</th><th>Decision</th><th></th></tr></thead>
+            <tbody id="approvals"></tbody>
+          </table>
+        </section>
+        <section class="card card--flush">
+          <div class="card-head"><span class="card-label">Audit trail</span><span class="count" id="auditCount"></span></div>
+          <div class="table-scroll"><table class="data-table">
+            <thead><tr><th>Time (UTC)</th><th>Action</th><th>Actor</th><th class="hide-sm">Hash</th></tr></thead>
+            <tbody id="audit"></tbody>
+          </table></div>
+        </section>
       </div>
-      <div class="err" id="err"></div>
     </div>
-    <div class="card" style="margin-top:16px">
-      <h2>Change requests</h2>
-      <ul class="crlist" id="crs"></ul>
-    </div>
-  </aside>
-  <section class="card" id="detail"><div class="empty">File a change or pick one from the list.</div></section>
+  </div>
 </main>
+
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SYS = { requirements: "Requirement", parts: "Part", tests: "Test" };
+const STATE = { submitted: "Submitted", in_review: "In review", approved: "Approved", rejected: "Rejected", preview: "Not filed", pending: "Pending" };
 let selected = null;
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : r.statusText);
+  if (!r.ok) throw new Error(typeof body.detail === "string" ? body.detail : r.statusText);
   return body;
 }
+const state = s => `<span class="state state-${s}">${STATE[s] || s}</span>`;
+const empty = (cols, text) => `<tr class="data-table-empty"><td colspan="${cols}">${text}</td></tr>`;
 
 async function loadItems() {
   const [reqs, parts] = await Promise.all([api("/alm/requirements"), api("/plm/parts")]);
-  const opt = (i) => `<option value="${i.id}">${i.id}  ${esc(i.title)}</option>`;
+  const opt = i => `<option value="${i.id}">${i.id}  ${esc(i.title)}</option>`;
   $("#target").innerHTML = `<optgroup label="Parts">${parts.map(opt).join("")}</optgroup>` +
                            `<optgroup label="Requirements">${reqs.map(opt).join("")}</optgroup>`;
   $("#target").value = "PRT-122";
 }
 
-async function loadList() {
+async function loadQueue() {
   const crs = await api("/changes");
-  $("#crs").innerHTML = crs.length ? crs.map(c => `
-    <li data-id="${c.id}" class="${c.id === selected ? "sel" : ""}">
-      <div class="t">CR-${c.id} &middot; ${c.target_id} <span class="pill s-${c.state}">${c.state.replace("_", " ")}</span></div>
-      <div class="m">${esc(c.description)}</div>
-      <div class="m">${c.impacted_count} impacted &middot; ${c.source}</div>
-    </li>`).join("") : `<li class="m">None yet.</li>`;
-  document.querySelectorAll("#crs li[data-id]").forEach(li => li.onclick = () => show(+li.dataset.id));
+  $("#queueCount").textContent = crs.length;
+  $("#queue").innerHTML = crs.length ? crs.map(c => `
+    <tr class="click ${c.id === selected ? "sel" : ""}" data-id="${c.id}">
+      <td class="row-label">CR-${c.id}</td><td><span class="tag tag-${SYSKEY(c.target_id)}">${c.target_id}</span></td>
+      <td>${state(c.state)}</td><td class="num">${c.impacted_count}</td></tr>`).join("") : empty(4, "No change requests yet");
+  document.querySelectorAll("#queue tr[data-id]").forEach(tr => tr.onclick = () => show(+tr.dataset.id));
+  return crs;
 }
+const SYSKEY = id => ({ REQ: "requirements", PRT: "parts", TST: "tests" })[id.slice(0, 3)];
 
-async function loadAudit() {
+async function loadAuditBadge() {
   const v = await api("/audit/verify");
-  $("#auditBadge").innerHTML = v.valid
-    ? `<span class="ok">Audit chain verified</span> &middot; ${v.rows_checked} entries`
-    : `<span class="bad">Audit chain broken at entry ${v.broken_at_seq}</span>`;
+  $("#auditBadge").innerHTML = v.valid ? `<span class="audit-ok">Audit chain verified &middot; ${v.rows_checked}</span>`
+                                       : `<span class="audit-bad">Audit chain broken at ${v.broken_at_seq}</span>`;
 }
 
-function columns(items) {
-  const sys = [["requirements", "Requirements"], ["parts", "Parts"], ["tests", "Tests to re-run"]];
-  return `<div class="cols">${sys.map(([k, label]) => {
-    const list = items.filter(i => i.system === k);
-    return `<div class="col ${k}"><h4>${label} (${list.length})</h4>${list.map(i => `
-      <div class="it" style="margin-left:${Math.min(i.depth - 1, 3) * 12}px">
-        <span class="tag ${k}">${i.item_id}</span> ${esc(i.title)}
-        <div class="why">${esc(i.reason)} &middot; depth ${i.depth} &middot; ${esc(i.owner)}</div>
-      </div>`).join("") || `<div class="why">None</div>`}</div>`;
-  }).join("")}</div>`;
-}
-
-function stats(items, approvers) {
+function renderHero(eyebrow, title, st, items, apprText, reason = "") {
   const n = k => items.filter(i => i.system === k).length;
-  return `<div class="stats">
-    <div class="stat"><b style="color:var(--req)">${n("requirements")}</b><span>requirements affected</span></div>
-    <div class="stat"><b style="color:var(--prt)">${n("parts")}</b><span>parts / assemblies affected</span></div>
-    <div class="stat"><b style="color:var(--tst)">${n("tests")}</b><span>tests to re-run</span></div>
-    <div class="stat"><b>${approvers}</b><span>approvers routed</span></div></div>`;
+  $("#eyebrow").textContent = eyebrow;
+  $("#heroTitle").textContent = title;
+  $("#heroState").innerHTML = state(st);
+  $("#heroStats").innerHTML = [["Requirements", n("requirements")], ["Parts and assemblies", n("parts")],
+    ["Tests to re-run", n("tests")], ["Approvals", apprText]]
+    .map(([l, v]) => `<div class="stat-pill"><strong>${v}</strong>${l}</div>`).join("") +
+    (reason ? `<div class="stat-pill stat-pill--wide"><strong>Reason</strong>${esc(reason)}</div>` : "");
+}
+
+function renderImpact(items) {
+  $("#impactCount").textContent = `${items.length} items`;
+  let last = null;
+  $("#impact").innerHTML = items.length ? ["requirements", "parts", "tests"].flatMap(k => items.filter(i => i.system === k))
+    .map(i => { const start = i.system !== last; last = i.system; return `
+      <tr class="${start ? "sys-start" : ""}"><td><span class="tag tag-${i.system}">${SYS[i.system]}</span></td>
+      <td class="row-label">${i.item_id}</td><td>${esc(i.title)}</td>
+      <td class="via hide-sm">${esc(i.reason)}</td><td class="num">${i.depth}</td><td class="hide-sm">${esc(i.owner)}</td></tr>`; }).join("")
+    : empty(6, "Nothing downstream of this item");
 }
 
 async function show(id) {
   selected = id;
   const [d, log] = await Promise.all([api(`/changes/${id}`), api(`/audit?entity=CR-${id}`)]);
-  loadList(); loadAudit();
-  const decided = d.approvals.filter(a => a.decision).length;
-  $("#detail").innerHTML = `
-    <div class="head"><h3>CR-${d.id}: ${d.target.id} ${esc(d.target.title)}</h3>
-      <span class="pill s-${d.state}">${d.state.replace("_", " ")}</span></div>
-    <div class="desc">${esc(d.description)} &middot; requested by ${esc(d.requested_by)} &middot; ${d.source}</div>
-    ${d.state === "submitted" ? `<div class="empty">Waiting for the worker to assess impact...</div>` :
-      stats(d.impacted, d.approvals.length) + columns(d.impacted)}
-    <div class="grid2">
-      <div><h2>Approvals (${decided}/${d.approvals.length})</h2><table>${d.approvals.map(a => `
-        <tr><td>${esc(a.approver)}</td>
-            <td>${a.decision ? `<span class="${a.decision === "approved" ? "ok" : "bad"}">${a.decision}</span>` : `<span class="wait">pending</span>`}</td>
-            <td class="act">${!a.decision && d.state === "in_review" ? `
-              <button data-a="${esc(a.approver)}" data-d="approved">Approve</button>
-              <button data-a="${esc(a.approver)}" data-d="rejected">Reject</button>` : esc(a.comment || "")}</td></tr>`).join("")}
-      </table></div>
-      <div><h2>Audit trail for CR-${d.id}</h2><div class="log">${log.map(e => `
-        <div>${e.ts.slice(11, 19)} <b>${esc(e.action)}</b> by ${esc(e.actor)}<br><span class="h">hash ${e.hash.slice(0, 16)}... prev ${e.prev_hash.slice(0, 8)}...</span></div>`).join("")}</div></div>
-    </div>`;
+  loadQueue(); loadAuditBadge();
+  const done = d.approvals.filter(a => a.decision).length;
+  renderHero(`CR-${d.id} · ${d.source === "detected" ? "Detected from a system revision" : "Filed by " + d.requested_by}`,
+             `${d.target.id} ${d.target.title}`, d.state, d.impacted, `${done} of ${d.approvals.length}`, d.description);
+  renderImpact(d.impacted);
+  $("#apprCount").textContent = `${done} of ${d.approvals.length}`;
+  $("#approvals").innerHTML = d.approvals.length ? d.approvals.map(a => `
+    <tr><td class="row-label">${esc(a.approver)}</td><td>${state(a.decision || "pending")}</td>
+      <td><div class="cell-actions">${!a.decision && d.state === "in_review" ? `
+        <button class="btn btn-sm btn-primary" data-a="${esc(a.approver)}" data-d="approved">Approve</button>
+        <button class="btn btn-sm btn-outline" data-a="${esc(a.approver)}" data-d="rejected">Reject</button>` : esc(a.comment || "")}</div></td></tr>`).join("")
+    : empty(3, "Routing after impact is assessed");
+  $("#auditCount").textContent = `${log.length} entries`;
+  $("#audit").innerHTML = log.map(e => `<tr><td class="mono">${e.ts.slice(11, 19)}</td><td class="row-label">${esc(e.action)}</td>
+    <td>${esc(e.actor)}</td><td class="mono hide-sm">${e.hash.slice(0, 8)}</td></tr>`).join("");
   document.querySelectorAll("button[data-a]").forEach(b => b.onclick = async () => {
     try { await api(`/changes/${id}/decisions`, { method: "POST", body: JSON.stringify({ approver: b.dataset.a, decision: b.dataset.d }) }); }
-    catch (e) { alertErr(e); }
-    show(id); loadAudit();
+    catch (e) { showErr(e); }
+    show(id);
   });
   if (d.state === "submitted") setTimeout(() => show(id), 1000);
 }
 
-function alertErr(e) { $("#err").textContent = e.message; setTimeout(() => $("#err").textContent = "", 4000); }
+async function preview(t) {
+  const r = await api(`/impact/${t}`);
+  selected = null; loadQueue();
+  const opt = $("#target").selectedOptions[0];
+  renderHero("Preview · nothing is filed or routed", opt ? opt.textContent.replace(/\s+/, " ") : t, "preview", r.impacted, `${r.approvers.length} to route`);
+  renderImpact(r.impacted);
+  $("#apprCount").textContent = ""; $("#approvals").innerHTML = empty(3, "File the change to route approvals");
+  $("#auditCount").textContent = ""; $("#audit").innerHTML = empty(4, "Nothing recorded for a preview");
+}
+
+function showErr(e) { $("#err").textContent = e.message; setTimeout(() => $("#err").textContent = "", 4000); }
 
 $("#file").onclick = async () => {
   try {
     const r = await api("/changes", { method: "POST", body: JSON.stringify({
       target_id: $("#target").value, description: $("#desc").value, requested_by: $("#who").value }) });
-    await show(r.id); loadAudit();
-  } catch (e) { alertErr(e); }
+    show(r.id);
+  } catch (e) { showErr(e); }
 };
+$("#preview").onclick = () => preview($("#target").value).catch(showErr);
 
-$("#preview").onclick = async () => {
-  try {
-    const t = $("#target").value, r = await api(`/impact/${t}`);
-    selected = null; loadList();
-    $("#detail").innerHTML = `<div class="head"><h3>Preview: change to ${t}</h3><span class="pill s-submitted">not filed</span></div>
-      <div class="desc">Read-only. Nothing is filed or routed until you file the change.</div>
-      ${stats(r.impacted, new Set(r.impacted.map(i => i.owner)).size + 1)}${columns(r.impacted)}`;
-  } catch (e) { alertErr(e); }
-};
-
-loadItems(); loadList(); loadAudit();
+(async () => {
+  await loadItems(); loadAuditBadge();
+  const crs = await loadQueue();
+  crs.length ? show(crs[0].id) : preview("PRT-122");
+})();
 </script>
 </body>
 </html>

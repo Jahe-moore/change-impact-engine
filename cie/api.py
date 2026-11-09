@@ -9,6 +9,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import audit, changes, events, impact
@@ -108,7 +109,9 @@ def create_app(db_path: str | None = None, run_worker: bool = True, worker_inter
         """What would a change to this item touch? Read-only, files nothing."""
         if get_item(c, item_id) is None:
             raise HTTPException(404, f"{item_id} not found")
-        return {"target": item_id, "impacted": impact.analyze(c, item_id)}
+        items = impact.analyze(c, item_id)
+        approvers = sorted({get_item(c, item_id)["owner"], changes.CONFIG_MANAGER, *(i["owner"] for i in items)})
+        return {"target": item_id, "impacted": items, "approvers": approvers}
 
     @app.post("/changes", status_code=202, tags=["changes"])
     def file_change(body: ChangeIn, c=Depends(db)):
@@ -167,6 +170,8 @@ def create_app(db_path: str | None = None, run_worker: bool = True, worker_inter
     @app.get("/healthz", include_in_schema=False)
     def health():
         return {"ok": True}
+
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/", include_in_schema=False)
     def index():
