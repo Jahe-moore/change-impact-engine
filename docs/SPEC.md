@@ -36,7 +36,7 @@ Implemented as a recursive SQL query over one `trace_link` table.
 ## Change request lifecycle
 `POST /changes` (target item + description) -> state `submitted` -> impact computed -> approvers assigned ->
 `in_review` -> each approver `approve` / `reject` -> `approved` (all approve) or `rejected` (any reject).
-**Approvers** = distinct owners of every impacted item, plus the `Configuration Manager` (always).
+**Approvers** = the owner of the changed item, the distinct owners of every impacted item, plus the `Configuration Manager` (always).
 Every affected test is listed as a **re-test required** item on the approved change.
 
 ## Events (outbox pattern)

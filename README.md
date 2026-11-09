@@ -23,7 +23,7 @@ means a test that should have been re-run wasn't. Full write-up with an illustra
 | Impact analysis | Recursive SQL walks the graph: up the BOM, out to requirements, out to tests. Each hit carries its depth and the reason |
 | Event-driven | Revising an item writes an `item.changed` event to an outbox **in the same transaction**; a worker opens and assesses a change request automatically |
 | Reliable processing | Idempotent consumer (a redelivered event is skipped), 3 retries, then a dead-letter queue |
-| Approval routing | Approvers = the owners of every impacted item, plus Configuration Management. One rejection rejects |
+| Approval routing | Approvers = the owner of the changed item and of every impacted item, plus Configuration Management. One rejection rejects |
 | Audit trail | Append-only (DB triggers block UPDATE/DELETE) and SHA-256 hash-chained; `GET /audit/verify` detects tampering |
 
 ## Run it
