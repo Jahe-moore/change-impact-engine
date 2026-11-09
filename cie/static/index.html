@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change Impact Engine</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --ink: #14171c; --mute: #5d6573; --line: #dde1e7;
+    --req: #2f6fd6; --prt: #c2711b; --tst: #2a9461; --ok: #2a9461; --bad: #c9423a; --wait: #8a8f99;
+    --accent: #0e2a47;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1115; --panel: #1a1d24; --ink: #eef0f3; --mute: #9aa1ad; --line: #2e333d;
+      --req: #6ea1f2; --prt: #e9a256; --tst: #5cc58f; --ok: #5cc58f; --bad: #ef6b62; --accent: #9cc3ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 18px; }
+  header .sub { color: var(--mute); }
+  header .audit { margin-left: auto; font-size: 13px; }
+  main { display: grid; grid-template-columns: 320px 1fr; gap: 16px; padding: 16px 20px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--mute); margin: 0 0 10px; }
+  label { display: block; font-size: 12px; color: var(--mute); margin: 8px 0 3px; }
+  select, input, textarea, button { font: inherit; color: inherit; }
+  select, input, textarea { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+  textarea { resize: vertical; min-height: 54px; }
+  button { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .crlist { list-style: none; margin: 0; padding: 0; }
+  .crlist li { padding: 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+  .crlist li:hover { background: var(--bg); }
+  .crlist li.sel { border-color: var(--accent); }
+  .crlist .t { font-weight: 600; }
+  .crlist .m { color: var(--mute); font-size: 12px; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; }
+  .s-submitted { color: var(--wait); } .s-in_review { color: var(--prt); } .s-approved { color: var(--ok); } .s-rejected { color: var(--bad); }
+  .tag { font: 600 12px ui-monospace, Consolas, monospace; padding: 1px 6px; border-radius: 4px; color: #fff; }
+  .tag.requirements { background: var(--req); } .tag.parts { background: var(--prt); } .tag.tests { background: var(--tst); }
+  .head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .head h3 { margin: 0; font-size: 20px; }
+  .desc { color: var(--mute); margin: 6px 0 12px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.1; }
+  .stat span { color: var(--mute); font-size: 12px; }
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+  .col h4 { margin: 0 0 8px; font-size: 13px; }
+  .col.requirements h4 { color: var(--req); } .col.parts h4 { color: var(--prt); } .col.tests h4 { color: var(--tst); }
+  .it { padding: 6px 8px; border-left: 3px solid var(--line); margin-bottom: 6px; background: var(--bg); border-radius: 0 6px 6px 0; }
+  .col.requirements .it { border-color: var(--req); } .col.parts .it { border-color: var(--prt); } .col.tests .it { border-color: var(--tst); }
+  .it .why { color: var(--mute); font-size: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
+  td.act { text-align: right; white-space: nowrap; }
+  td.act button { padding: 3px 9px; font-size: 12px; }
+  .ok { color: var(--ok); font-weight: 600; } .bad { color: var(--bad); font-weight: 600; } .wait { color: var(--wait); }
+  .log { font: 12px ui-monospace, Consolas, monospace; max-height: 260px; overflow: auto; }
+  .log div { padding: 3px 0; border-top: 1px solid var(--line); }
+  .log .h { color: var(--mute); }
+  .empty { color: var(--mute); padding: 40px; text-align: center; }
+  .err { color: var(--bad); font-size: 12px; min-height: 16px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Change Impact Engine</h1>
+  <span class="sub">IP-200 infusion pump (demo product) &middot; requirements, parts and tests in one thread</span>
+  <span class="audit" id="auditBadge"></span>
+</header>
+<main>
+  <aside>
+    <div class="card">
+      <h2>New change request</h2>
+      <label for="target">Item to change</label>
+      <select id="target"></select>
+      <label for="desc">What and why</label>
+      <textarea id="desc">Second-source the line pressure sensor (supplier end-of-life)</textarea>
+      <label for="who">Requested by</label>
+      <input id="who" value="Electrical Lead">
+      <div class="row">
+        <button class="primary" id="file">File change</button>
+        <button id="preview">Preview impact</button>
+      </div>
+      <div class="err" id="err"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>Change requests</h2>
+      <ul class="crlist" id="crs"></ul>
+    </div>
+  </aside>
+  <section class="card" id="detail"><div class="empty">File a change or pick one from the list.</div></section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let selected = null;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : r.statusText);
+  return body;
+}
+
+async function loadItems() {
+  const [reqs, parts] = await Promise.all([api("/alm/requirements"), api("/plm/parts")]);
+  const opt = (i) => `<option value="${i.id}">${i.id}  ${esc(i.title)}</option>`;
+  $("#target").innerHTML = `<optgroup label="Parts">${parts.map(opt).join("")}</optgroup>` +
+                           `<optgroup label="Requirements">${reqs.map(opt).join("")}</optgroup>`;
+  $("#target").value = "PRT-122";
+}
+
+async function loadList() {
+  const crs = await api("/changes");
+  $("#crs").innerHTML = crs.length ? crs.map(c => `
+    <li data-id="${c.id}" class="${c.id === selected ? "sel" : ""}">
+      <div class="t">CR-${c.id} &middot; ${c.target_id} <span class="pill s-${c.state}">${c.state.replace("_", " ")}</span></div>
+      <div class="m">${esc(c.description)}</div>
+      <div class="m">${c.impacted_count} impacted &middot; ${c.source}</div>
+    </li>`).join("") : `<li class="m">None yet.</li>`;
+  document.querySelectorAll("#crs li[data-id]").forEach(li => li.onclick = () => show(+li.dataset.id));
+}
+
+async function loadAudit() {
+  const v = await api("/audit/verify");
+  $("#auditBadge").innerHTML = v.valid
+    ? `<span class="ok">Audit chain verified</span> &middot; ${v.rows_checked} entries`
+    : `<span class="bad">Audit chain broken at entry ${v.broken_at_seq}</span>`;
+}
+
+function columns(items) {
+  const sys = [["requirements", "Requirements"], ["parts", "Parts"], ["tests", "Tests to re-run"]];
+  return `<div class="cols">${sys.map(([k, label]) => {
+    const list = items.filter(i => i.system === k);
+    return `<div class="col ${k}"><h4>${label} (${list.length})</h4>${list.map(i => `
+      <div class="it" style="margin-left:${Math.min(i.depth - 1, 3) * 12}px">
+        <span class="tag ${k}">${i.item_id}</span> ${esc(i.title)}
+        <div class="why">${esc(i.reason)} &middot; depth ${i.depth} &middot; ${esc(i.owner)}</div>
+      </div>`).join("") || `<div class="why">None</div>`}</div>`;
+  }).join("")}</div>`;
+}
+
+function stats(items, approvers) {
+  const n = k => items.filter(i => i.system === k).length;
+  return `<div class="stats">
+    <div class="stat"><b style="color:var(--req)">${n("requirements")}</b><span>requirements affected</span></div>
+    <div class="stat"><b style="color:var(--prt)">${n("parts")}</b><span>parts / assemblies affected</span></div>
+    <div class="stat"><b style="color:var(--tst)">${n("tests")}</b><span>tests to re-run</span></div>
+    <div class="stat"><b>${approvers}</b><span>approvers routed</span></div></div>`;
+}
+
+async function show(id) {
+  selected = id;
+  const [d, log] = await Promise.all([api(`/changes/${id}`), api(`/audit?entity=CR-${id}`)]);
+  loadList(); loadAudit();
+  const decided = d.approvals.filter(a => a.decision).length;
+  $("#detail").innerHTML = `
+    <div class="head"><h3>CR-${d.id}: ${d.target.id} ${esc(d.target.title)}</h3>
+      <span class="pill s-${d.state}">${d.state.replace("_", " ")}</span></div>
+    <div class="desc">${esc(d.description)} &middot; requested by ${esc(d.requested_by)} &middot; ${d.source}</div>
+    ${d.state === "submitted" ? `<div class="empty">Waiting for the worker to assess impact...</div>` :
+      stats(d.impacted, d.approvals.length) + columns(d.impacted)}
+    <div class="grid2">
+      <div><h2>Approvals (${decided}/${d.approvals.length})</h2><table>${d.approvals.map(a => `
+        <tr><td>${esc(a.approver)}</td>
+            <td>${a.decision ? `<span class="${a.decision === "approved" ? "ok" : "bad"}">${a.decision}</span>` : `<span class="wait">pending</span>`}</td>
+            <td class="act">${!a.decision && d.state === "in_review" ? `
+              <button data-a="${esc(a.approver)}" data-d="approved">Approve</button>
+              <button data-a="${esc(a.approver)}" data-d="rejected">Reject</button>` : esc(a.comment || "")}</td></tr>`).join("")}
+      </table></div>
+      <div><h2>Audit trail for CR-${d.id}</h2><div class="log">${log.map(e => `
+        <div>${e.ts.slice(11, 19)} <b>${esc(e.action)}</b> by ${esc(e.actor)}<br><span class="h">hash ${e.hash.slice(0, 16)}... prev ${e.prev_hash.slice(0, 8)}...</span></div>`).join("")}</div></div>
+    </div>`;
+  document.querySelectorAll("button[data-a]").forEach(b => b.onclick = async () => {
+    try { await api(`/changes/${id}/decisions`, { method: "POST", body: JSON.stringify({ approver: b.dataset.a, decision: b.dataset.d }) }); }
+    catch (e) { alertErr(e); }
+    show(id); loadAudit();
+  });
+  if (d.state === "submitted") setTimeout(() => show(id), 1000);
+}
+
+function alertErr(e) { $("#err").textContent = e.message; setTimeout(() => $("#err").textContent = "", 4000); }
+
+$("#file").onclick = async () => {
+  try {
+    const r = await api("/changes", { method: "POST", body: JSON.stringify({
+      target_id: $("#target").value, description: $("#desc").value, requested_by: $("#who").value }) });
+    await show(r.id); loadAudit();
+  } catch (e) { alertErr(e); }
+};
+
+$("#preview").onclick = async () => {
+  try {
+    const t = $("#target").value, r = await api(`/impact/${t}`);
+    selected = null; loadList();
+    $("#detail").innerHTML = `<div class="head"><h3>Preview: change to ${t}</h3><span class="pill s-submitted">not filed</span></div>
+      <div class="desc">Read-only. Nothing is filed or routed until you file the change.</div>
+      ${stats(r.impacted, new Set(r.impacted.map(i => i.owner)).size + 1)}${columns(r.impacted)}`;
+  } catch (e) { alertErr(e); }
+};
+
+loadItems(); loadList(); loadAudit();
+</script>
+</body>
+</html>
