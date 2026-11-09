@@ -100,6 +100,7 @@ def detail(conn, change_id: int) -> dict | None:
 
 def list_all(conn) -> list[dict]:
     return [dict(r) for r in conn.execute(
-        "SELECT c.*, (SELECT COUNT(*) FROM impacted_item i WHERE i.change_id = c.id) AS impacted_count "
+        "SELECT c.*, (SELECT COUNT(*) FROM impacted_item i WHERE i.change_id = c.id) AS impacted_count, "
+        "(SELECT title FROM item WHERE id = c.target_id) AS target_title "
         "FROM change_request c ORDER BY c.id DESC")]
 

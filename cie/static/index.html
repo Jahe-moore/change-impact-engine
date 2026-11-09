@@ -40,7 +40,7 @@
   .tag-parts        { background: var(--orange-bg);   color: #8a5506; }
   .tag-tests        { background: var(--green-bg);    color: var(--green); }
   .state { display: inline-block; font-family: 'League Spartan', sans-serif; font-weight: 700; font-size: 0.68rem;
-    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.55rem; border-radius: 3px; }
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.55rem; border-radius: 3px; white-space: nowrap; }
   .state-submitted, .state-pending, .state-preview { background: var(--light-gray); color: var(--charcoal); }
   .state-in_review { background: var(--orange-bg); color: #8a5506; }
   .state-approved  { background: var(--green-bg);  color: var(--green); }
@@ -93,10 +93,10 @@
   <div class="layout">
     <div class="stack">
       <section class="card">
-        <span class="card-label">New change request</span>
-        <div class="field"><label for="target">Item</label><select id="target"></select></div>
-        <div class="field"><label for="desc">Change and reason</label>
-          <textarea id="desc">Second-source the line pressure sensor (supplier end-of-life)</textarea></div>
+        <span class="card-label">Propose a change</span>
+        <div class="field"><label for="target">What is changing</label><select id="target"></select></div>
+        <div class="field"><label for="desc">What and why</label>
+          <textarea id="desc">Switch the pressure sensor to a new supplier. The old one is discontinued.</textarea></div>
         <div class="field"><label for="who">Requested by</label><input id="who" value="Electrical Lead"></div>
         <div class="actions">
           <button class="btn btn-primary" id="file">File change</button>
@@ -105,9 +105,9 @@
         <div class="err" id="err"></div>
       </section>
       <section class="card card--flush">
-        <div class="card-head"><span class="card-label">Change queue</span><span class="count" id="queueCount"></span></div>
+        <div class="card-head"><span class="card-label">All changes</span><span class="count" id="queueCount"></span></div>
         <table class="data-table">
-          <thead><tr><th>CR</th><th>Item</th><th>State</th><th>Hits</th></tr></thead>
+          <thead><tr><th>Change</th><th>Item</th><th>Status</th><th>Affects</th></tr></thead>
           <tbody id="queue"></tbody>
         </table>
       </section>
@@ -115,24 +115,24 @@
 
     <div class="stack">
       <section class="card card--flush">
-        <div class="card-head"><span class="card-label">Impact across systems</span><span class="count" id="impactCount"></span></div>
+        <div class="card-head"><span class="card-label">What this change affects</span><span class="count" id="impactCount"></span></div>
         <div class="table-scroll"><table class="data-table">
-          <thead><tr><th>System</th><th>Item</th><th>Title</th><th class="hide-sm">Linked via</th><th>Hops</th><th class="hide-sm">Owner</th></tr></thead>
+          <thead><tr><th>Type</th><th>Item</th><th class="hide-sm">Why it is affected</th><th>Steps away</th><th class="hide-sm">Owner</th><th class="hide-sm">ID</th></tr></thead>
           <tbody id="impact"></tbody>
         </table></div>
       </section>
       <div class="two">
         <section class="card card--flush">
-          <div class="card-head"><span class="card-label">Approvals</span><span class="count" id="apprCount"></span></div>
+          <div class="card-head"><span class="card-label">Sign-offs</span><span class="count" id="apprCount"></span></div>
           <table class="data-table">
             <thead><tr><th>Approver</th><th>Decision</th><th></th></tr></thead>
             <tbody id="approvals"></tbody>
           </table>
         </section>
         <section class="card card--flush">
-          <div class="card-head"><span class="card-label">Audit trail</span><span class="count" id="auditCount"></span></div>
+          <div class="card-head"><span class="card-label">Change log</span><span class="count" id="auditCount"></span></div>
           <div class="table-scroll"><table class="data-table">
-            <thead><tr><th>Time (UTC)</th><th>Action</th><th>Actor</th><th class="hide-sm">Hash</th></tr></thead>
+            <thead><tr><th>Time (UTC)</th><th>What happened</th><th>Who</th><th class="hide-sm">Seal</th></tr></thead>
             <tbody id="audit"></tbody>
           </table></div>
         </section>
@@ -144,6 +144,9 @@
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ACTION = { "change.submitted": "Filed", "impact.assessed": "Impact found, sign-offs sent",
+  "change.approved": "Approved", "change.rejected": "Rejected", "change.closed.approved": "Change approved",
+  "change.closed.rejected": "Change rejected", "item.revised": "Part edited" };
 const SYS = { requirements: "Requirement", parts: "Part", tests: "Test" };
 const STATE = { submitted: "Submitted", in_review: "In review", approved: "Approved", rejected: "Rejected", preview: "Not filed", pending: "Pending" };
 let selected = null;
@@ -159,7 +162,7 @@ const empty = (cols, text) => `<tr class="data-table-empty"><td colspan="${cols}
 
 async function loadItems() {
   const [reqs, parts] = await Promise.all([api("/alm/requirements"), api("/plm/parts")]);
-  const opt = i => `<option value="${i.id}">${i.id}  ${esc(i.title)}</option>`;
+  const opt = i => `<option value="${i.id}">${esc(i.title)} (${i.id})</option>`;
   $("#target").innerHTML = `<optgroup label="Parts">${parts.map(opt).join("")}</optgroup>` +
                            `<optgroup label="Requirements">${reqs.map(opt).join("")}</optgroup>`;
   $("#target").value = "PRT-122";
@@ -170,7 +173,7 @@ async function loadQueue() {
   $("#queueCount").textContent = crs.length;
   $("#queue").innerHTML = crs.length ? crs.map(c => `
     <tr class="click ${c.id === selected ? "sel" : ""}" data-id="${c.id}">
-      <td class="row-label">CR-${c.id}</td><td><span class="tag tag-${SYSKEY(c.target_id)}">${c.target_id}</span></td>
+      <td class="row-label">#${c.id}</td><td>${esc(c.target_title)}</td>
       <td>${state(c.state)}</td><td class="num">${c.impacted_count}</td></tr>`).join("") : empty(4, "No change requests yet");
   document.querySelectorAll("#queue tr[data-id]").forEach(tr => tr.onclick = () => show(+tr.dataset.id));
   return crs;
@@ -179,8 +182,8 @@ const SYSKEY = id => ({ REQ: "requirements", PRT: "parts", TST: "tests" })[id.sl
 
 async function loadAuditBadge() {
   const v = await api("/audit/verify");
-  $("#auditBadge").innerHTML = v.valid ? `<span class="audit-ok">Audit chain verified &middot; ${v.rows_checked}</span>`
-                                       : `<span class="audit-bad">Audit chain broken at ${v.broken_at_seq}</span>`;
+  $("#auditBadge").innerHTML = v.valid ? `<span class="audit-ok">Change log intact &middot; ${v.rows_checked} entries</span>`
+                                       : `<span class="audit-bad">Change log edited at entry ${v.broken_at_seq}</span>`;
 }
 
 function renderHero(eyebrow, title, st, items, apprText, reason = "") {
@@ -188,8 +191,8 @@ function renderHero(eyebrow, title, st, items, apprText, reason = "") {
   $("#eyebrow").textContent = eyebrow;
   $("#heroTitle").textContent = title;
   $("#heroState").innerHTML = state(st);
-  $("#heroStats").innerHTML = [["Requirements", n("requirements")], ["Parts and assemblies", n("parts")],
-    ["Tests to re-run", n("tests")], ["Approvals", apprText]]
+  $("#heroStats").innerHTML = [["Requirements affected", n("requirements")], ["Parts affected", n("parts")],
+    ["Tests to re-run", n("tests")], ["Sign-offs", apprText]]
     .map(([l, v]) => `<div class="stat-pill"><strong>${v}</strong>${l}</div>`).join("") +
     (reason ? `<div class="stat-pill stat-pill--wide"><strong>Reason</strong>${esc(reason)}</div>` : "");
 }
@@ -200,9 +203,10 @@ function renderImpact(items) {
   $("#impact").innerHTML = items.length ? ["requirements", "parts", "tests"].flatMap(k => items.filter(i => i.system === k))
     .map(i => { const start = i.system !== last; last = i.system; return `
       <tr class="${start ? "sys-start" : ""}"><td><span class="tag tag-${i.system}">${SYS[i.system]}</span></td>
-      <td class="row-label">${i.item_id}</td><td>${esc(i.title)}</td>
-      <td class="via hide-sm">${esc(i.reason)}</td><td class="num">${i.depth}</td><td class="hide-sm">${esc(i.owner)}</td></tr>`; }).join("")
-    : empty(6, "Nothing downstream of this item");
+      <td class="row-label">${esc(i.title)}</td>
+      <td class="via hide-sm">${esc(i.reason)}</td><td class="num">${i.depth}</td><td class="hide-sm">${esc(i.owner)}</td>
+      <td class="mono hide-sm">${i.item_id}</td></tr>`; }).join("")
+    : empty(6, "Nothing else depends on this item");
 }
 
 async function show(id) {
@@ -210,8 +214,8 @@ async function show(id) {
   const [d, log] = await Promise.all([api(`/changes/${id}`), api(`/audit?entity=CR-${id}`)]);
   loadQueue(); loadAuditBadge();
   const done = d.approvals.filter(a => a.decision).length;
-  renderHero(`CR-${d.id} · ${d.source === "detected" ? "Detected from a system revision" : "Filed by " + d.requested_by}`,
-             `${d.target.id} ${d.target.title}`, d.state, d.impacted, `${done} of ${d.approvals.length}`, d.description);
+  renderHero(`Change #${d.id} · ${d.source === "detected" ? "Opened automatically when the part was edited" : "Filed by " + d.requested_by}`,
+             `${d.target.title}`, d.state, d.impacted, `${done} of ${d.approvals.length}`, d.description);
   renderImpact(d.impacted);
   $("#apprCount").textContent = `${done} of ${d.approvals.length}`;
   $("#approvals").innerHTML = d.approvals.length ? d.approvals.map(a => `
@@ -221,8 +225,8 @@ async function show(id) {
         <button class="btn btn-sm btn-outline" data-a="${esc(a.approver)}" data-d="rejected">Reject</button>` : esc(a.comment || "")}</div></td></tr>`).join("")
     : empty(3, "Routing after impact is assessed");
   $("#auditCount").textContent = `${log.length} entries`;
-  $("#audit").innerHTML = log.map(e => `<tr><td class="mono">${e.ts.slice(11, 19)}</td><td class="row-label">${esc(e.action)}</td>
-    <td>${esc(e.actor)}</td><td class="mono hide-sm">${e.hash.slice(0, 8)}</td></tr>`).join("");
+  $("#audit").innerHTML = log.map(e => `<tr><td class="mono">${e.ts.slice(11, 19)}</td><td class="row-label">${esc(ACTION[e.action] || e.action)}</td>
+    <td>${esc(e.actor === "impact-engine" ? "System" : e.actor)}</td><td class="mono hide-sm">${e.hash.slice(0, 8)}</td></tr>`).join("");
   document.querySelectorAll("button[data-a]").forEach(b => b.onclick = async () => {
     try { await api(`/changes/${id}/decisions`, { method: "POST", body: JSON.stringify({ approver: b.dataset.a, decision: b.dataset.d }) }); }
     catch (e) { showErr(e); }
@@ -235,7 +239,7 @@ async function preview(t) {
   const r = await api(`/impact/${t}`);
   selected = null; loadQueue();
   const opt = $("#target").selectedOptions[0];
-  renderHero("Preview · nothing is filed or routed", opt ? opt.textContent.replace(/\s+/, " ") : t, "preview", r.impacted, `${r.approvers.length} to route`);
+  renderHero("Preview only. Nothing is filed or sent for sign-off", opt ? opt.textContent.replace(/ \(.*\)$/, "") : t, "preview", r.impacted, `${r.approvers.length} to route`);
   renderImpact(r.impacted);
   $("#apprCount").textContent = ""; $("#approvals").innerHTML = empty(3, "File the change to route approvals");
   $("#auditCount").textContent = ""; $("#audit").innerHTML = empty(4, "Nothing recorded for a preview");

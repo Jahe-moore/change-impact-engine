@@ -31,6 +31,10 @@ def test_sensor_swap_impact(client):
     assert ids(imp) == {"PRT-120", "PRT-100", "REQ-010", "TST-202", "TST-207"}
     depth = {i["item_id"]: i["depth"] for i in imp}
     assert depth["PRT-120"] == 1 and depth["PRT-100"] == 2 and depth["REQ-010"] == 1
+    reason = {i["item_id"]: i["reason"] for i in imp}
+    assert reason["PRT-120"] == "holds the pressure sensor"
+    assert reason["REQ-010"] == "the pressure sensor helps meet this"
+    assert reason["TST-207"] == "tests the whole pump"
 
 
 def test_requirement_change_flows_down(client):
@@ -62,7 +66,7 @@ def test_change_lifecycle_approved(client):
     assert d["state"] == "in_review"
     assert set(d["retest_required"]) == {"TST-202", "TST-207"}
     approvers = [a["approver"] for a in d["approvals"]]
-    assert set(approvers) == {"Configuration Manager", "Electrical Lead", "Mechanical Lead", "Firmware Lead", "V&V Lead"}
+    assert set(approvers) == {"Configuration Manager", "Electrical Lead", "Mechanical Lead", "Firmware Lead", "Test Lead"}
 
     for a in approvers:
         state = client.post(f"/changes/{cid}/decisions", json={"approver": a, "decision": "approved"}).json()["state"]
@@ -73,7 +77,7 @@ def test_one_rejection_rejects(client):
     cid = client.post("/changes", json={"target_id": "PRT-130", "description": "Thinner housing wall",
                                         "requested_by": "Mechanical Lead"}).json()["id"]
     run_worker(client)
-    r = client.post(f"/changes/{cid}/decisions", json={"approver": "V&V Lead", "decision": "rejected",
+    r = client.post(f"/changes/{cid}/decisions", json={"approver": "Test Lead", "decision": "rejected",
                                                        "comment": "Drop test margin too thin"})
     assert r.json()["state"] == "rejected"
     # no more decisions once closed
@@ -147,7 +151,7 @@ def test_audit_chain_detects_tampering(client):
     cid = client.post("/changes", json={"target_id": "PRT-122", "description": "Sensor swap",
                                         "requested_by": "Electrical Lead"}).json()["id"]
     run_worker(client)
-    client.post(f"/changes/{cid}/decisions", json={"approver": "V&V Lead", "decision": "approved"})
+    client.post(f"/changes/{cid}/decisions", json={"approver": "Test Lead", "decision": "approved"})
     v = client.get("/audit/verify").json()
     assert v["valid"] and v["rows_checked"] >= 4
     # someone with direct database access drops the trigger and rewrites history

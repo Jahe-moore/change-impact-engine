@@ -6,38 +6,38 @@ from . import audit
 from .db import tx
 
 REQUIREMENTS = [
-    ("REQ-001", "Deliver programmed flow rate 0.1-999 mL/h within +/-5%", "Systems Engineer"),
-    ("REQ-002", "Detect downstream occlusion within 30 seconds", "Systems Engineer"),
-    ("REQ-003", "Run 4 hours on battery at 125 mL/h", "Systems Engineer"),
-    ("REQ-004", "Housing survives a 1 m drop onto concrete", "Mechanical Lead"),
-    ("REQ-005", "Enforce dose limits from the drug library", "Software Lead"),
-    ("REQ-010", "Sample line pressure at 10 Hz or faster", "Firmware Lead"),
-    ("REQ-011", "Occlusion alarm at least 65 dBA at 1 m", "Electrical Lead"),
-    ("REQ-012", "Battery pack capacity at least 2600 mAh", "Electrical Lead"),
+    ("REQ-001", "Deliver the set flow rate within 5%", "Systems Engineer"),
+    ("REQ-002", "Detect a blocked IV line within 30 seconds", "Systems Engineer"),
+    ("REQ-003", "Run 4 hours on battery", "Systems Engineer"),
+    ("REQ-004", "Survive a 1 meter drop", "Mechanical Lead"),
+    ("REQ-005", "Block doses above the drug library limit", "Software Lead"),
+    ("REQ-010", "Check line pressure at least 10 times a second", "Firmware Lead"),
+    ("REQ-011", "Blockage alarm loud enough to hear across a room", "Electrical Lead"),
+    ("REQ-012", "Battery holds at least 2600 mAh", "Electrical Lead"),
 ]
 
 PARTS = [
-    ("PRT-100", "IP-200 pump, top assembly", "Mechanical Lead"),
-    ("PRT-110", "Pumping mechanism assembly", "Mechanical Lead"),
+    ("PRT-100", "Whole pump", "Mechanical Lead"),
+    ("PRT-110", "Pumping mechanism", "Mechanical Lead"),
     ("PRT-111", "Stepper motor", "Mechanical Lead"),
-    ("PRT-112", "Peristaltic cam", "Mechanical Lead"),
-    ("PRT-120", "Control board assembly", "Electrical Lead"),
-    ("PRT-121", "Main microcontroller", "Electrical Lead"),
-    ("PRT-122", "Line pressure sensor", "Electrical Lead"),
+    ("PRT-112", "Roller cam", "Mechanical Lead"),
+    ("PRT-120", "Control board", "Electrical Lead"),
+    ("PRT-121", "Main chip", "Electrical Lead"),
+    ("PRT-122", "Pressure sensor", "Electrical Lead"),
     ("PRT-123", "Alarm speaker", "Electrical Lead"),
-    ("PRT-124", "Firmware image 2.3", "Firmware Lead"),
-    ("PRT-130", "Housing", "Mechanical Lead"),
+    ("PRT-124", "Pump software, version 2.3", "Firmware Lead"),
+    ("PRT-130", "Outer case", "Mechanical Lead"),
     ("PRT-140", "Battery pack", "Electrical Lead"),
 ]
 
 TESTS = [
-    ("TST-201", "Flow accuracy across rate range", "V&V Lead"),
-    ("TST-202", "Occlusion detection time", "V&V Lead"),
-    ("TST-203", "Alarm sound level", "V&V Lead"),
-    ("TST-204", "Battery runtime at 125 mL/h", "V&V Lead"),
-    ("TST-205", "1 m drop test", "V&V Lead"),
-    ("TST-206", "Drug library limit enforcement", "Software Lead"),
-    ("TST-207", "Full system regression", "V&V Lead"),
+    ("TST-201", "Flow accuracy test", "Test Lead"),
+    ("TST-202", "Blockage alarm test", "Test Lead"),
+    ("TST-203", "Alarm loudness test", "Test Lead"),
+    ("TST-204", "Battery life test", "Test Lead"),
+    ("TST-205", "Drop test", "Test Lead"),
+    ("TST-206", "Dose limit test", "Software Lead"),
+    ("TST-207", "Full pump check", "Test Lead"),
 ]
 
 LINKS = [
