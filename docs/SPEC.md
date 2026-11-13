@@ -47,6 +47,15 @@ same transaction. A worker (`python -m cie.worker`, or `POST /admin/process-even
 - **Retries:** a failing event is retried up to 3 times, then moved to `dead_letter` with the error.
 In v1 the outbox is a SQLite table; the roadmap swaps it for SQS/EventBridge without changing the consumer logic.
 
+## Exception queue
+Stalled or failed work becomes an owned item instead of a log line. `exception` table, one open row per (kind, entity).
+| Kind | Opened when | Owner | Resolve |
+|---|---|---|---|
+| `dead_letter` | an event fails 3 times | Integration Support | `retry` requeues the event; `dismiss` with a note |
+| `approval_overdue` | a change is in review past 5 days (worker scan each cycle) | Configuration Manager | closes itself when the change closes; a dismissal sticks |
+| `untraced_change` | the changed item has no trace links, so impact may be incomplete | Configuration Manager | `dismiss` with a note |
+`GET /exceptions`, `POST /exceptions/{id}/assign`, `POST /exceptions/{id}/resolve`, `GET /exceptions/metrics` (open by kind, oldest open, median hours to resolve). Every open, assign and resolve is audited.
+
 ## Audit trail
 `audit_log` is append-only: SQLite triggers abort any UPDATE or DELETE. Each row stores `prev_hash` and `hash`
 (SHA-256 of prev_hash + row content), so editing history breaks the chain. `GET /audit/verify` re-walks the chain.

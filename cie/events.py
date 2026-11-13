@@ -10,7 +10,7 @@ import json
 import uuid
 from typing import Callable
 
-from . import audit
+from . import audit, exceptions
 from .db import now, tx
 
 MAX_ATTEMPTS = 3
@@ -61,6 +61,8 @@ def process_pending(conn, limit: int = 100) -> dict:
                                  (ev["id"], str(exc), now()))
                     audit.record(conn, "worker", "event.dead_lettered", ev["id"],
                                  {"event_type": ev["event_type"], "error": str(exc)})
+                    exceptions.open_exception(conn, "dead_letter", ev["id"],
+                                              f"{ev['event_type']} failed {attempts} times: {exc}")
                     stats["dead_lettered"] += 1
                 else:
                     conn.execute("UPDATE outbox SET attempts = ?, last_error = ? WHERE id = ?",

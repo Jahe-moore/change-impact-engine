@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import audit, changes, events, impact
+from . import audit, changes, events, exceptions, impact
 from .db import SYSTEM_TABLES, connect, get_item, init_db, tx
 from .seed import seed
 
@@ -37,6 +37,25 @@ class DecisionIn(BaseModel):
     comment: str = Field(default="", max_length=500)
 
 
+class AssignIn(BaseModel):
+    owner: str = Field(min_length=2, max_length=80)
+    by: str = Field(min_length=2, max_length=80)
+
+
+class ResolveIn(BaseModel):
+    action: str = Field(pattern=r"^(retry|dismiss)$")
+    by: str = Field(min_length=2, max_length=80)
+    note: str = Field(default="", max_length=500)
+
+
+def run_cycle(conn) -> dict:
+    """One worker pass: process events, then scan for stalled reviews."""
+    stats = events.process_pending(conn)
+    with tx(conn):
+        stats["exceptions"] = exceptions.scan(conn)
+    return stats
+
+
 def create_app(db_path: str | None = None, run_worker: bool = True, worker_interval: float = 1.0) -> FastAPI:
     db_path = db_path or os.environ.get("CIE_DB", "data/cie.db")
     conn = connect(db_path)
@@ -49,7 +68,7 @@ def create_app(db_path: str | None = None, run_worker: bool = True, worker_inter
         if run_worker:
             async def loop():
                 while True:
-                    await asyncio.to_thread(events.process_pending, conn)
+                    await asyncio.to_thread(run_cycle, conn)
                     await asyncio.sleep(worker_interval)
             task = asyncio.create_task(loop())
         yield
@@ -145,7 +164,34 @@ def create_app(db_path: str | None = None, run_worker: bool = True, worker_inter
     # ---- events and audit -----------------------------------------------------------
     @app.post("/admin/process-events", tags=["events"])
     def process(c=Depends(db)):
-        return events.process_pending(c)
+        return run_cycle(c)
+
+    # ---- exception queue --------------------------------------------------------------
+    @app.get("/exceptions", tags=["exceptions"])
+    def list_exceptions(state: str | None = None, c=Depends(db)):
+        return exceptions.list_all(c, state)
+
+    @app.get("/exceptions/metrics", tags=["exceptions"])
+    def exception_metrics(c=Depends(db)):
+        return exceptions.metrics(c)
+
+    @app.post("/exceptions/{ex_id}/assign", tags=["exceptions"])
+    def assign_exception(ex_id: int, body: AssignIn, c=Depends(db)):
+        try:
+            with tx(c):
+                exceptions.assign(c, ex_id, body.owner, body.by)
+        except exceptions.ExceptionError as e:
+            raise HTTPException(409, str(e))
+        return dict(exceptions.get(c, ex_id))
+
+    @app.post("/exceptions/{ex_id}/resolve", tags=["exceptions"])
+    def resolve_exception(ex_id: int, body: ResolveIn, c=Depends(db)):
+        try:
+            with tx(c):
+                exceptions.resolve(c, ex_id, body.action, body.by, body.note)
+        except exceptions.ExceptionError as e:
+            raise HTTPException(409, str(e))
+        return dict(exceptions.get(c, ex_id))
 
     @app.get("/admin/events", tags=["events"])
     def event_status(c=Depends(db)):

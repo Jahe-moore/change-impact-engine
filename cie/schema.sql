@@ -88,6 +88,23 @@ CREATE TABLE IF NOT EXISTS dead_letter (
     failed_at  TEXT NOT NULL
 );
 
+-- Exception queue: stalled or failed work, with an owner and a resolution.
+CREATE TABLE IF NOT EXISTS exception (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind         TEXT NOT NULL CHECK (kind IN ('dead_letter', 'approval_overdue', 'untraced_change')),
+    entity       TEXT NOT NULL,   -- outbox event id or CR-<n>
+    summary      TEXT NOT NULL,
+    owner        TEXT NOT NULL,
+    state        TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'resolved')),
+    resolution   TEXT CHECK (resolution IN ('retried', 'dismissed', 'auto_closed')),
+    note         TEXT,
+    resolved_by  TEXT,
+    opened_at    TEXT NOT NULL,
+    resolved_at  TEXT,
+    CHECK ((state = 'open') = (resolution IS NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_exception_open ON exception (kind, entity) WHERE state = 'open';
+
 -- Audit trail: append-only, hash-chained.
 CREATE TABLE IF NOT EXISTS audit_log (
     seq        INTEGER PRIMARY KEY AUTOINCREMENT,

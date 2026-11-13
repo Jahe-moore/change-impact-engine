@@ -1,5 +1,5 @@
 """Change requests: filing, impact assignment and approval decisions."""
-from . import audit, impact
+from . import audit, exceptions, impact
 from .db import get_item, now
 from .events import emit
 
@@ -43,6 +43,9 @@ def assign_impact(conn, change_id: int) -> None:
     conn.execute("UPDATE change_request SET state = 'in_review' WHERE id = ?", (change_id,))
     audit.record(conn, "impact-engine", "impact.assessed", f"CR-{change_id}",
                  {"impacted": [i["item_id"] for i in items], "approvers": approvers})
+    if not items:
+        exceptions.open_exception(conn, "untraced_change", f"CR-{change_id}",
+                                  f"{cr['target_id']} has no trace links, so this impact list may be incomplete")
 
 
 def decide(conn, change_id: int, approver: str, decision: str, comment: str = "") -> str:

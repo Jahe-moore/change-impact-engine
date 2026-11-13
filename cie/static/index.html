@@ -137,6 +137,13 @@
           </table></div>
         </section>
       </div>
+      <section class="card card--flush">
+        <div class="card-head"><span class="card-label">Needs attention</span><span class="count" id="exCount"></span></div>
+        <div class="table-scroll"><table class="data-table">
+          <thead><tr><th>Problem</th><th>On</th><th>Details</th><th class="hide-sm">Owner</th><th></th></tr></thead>
+          <tbody id="exceptions"></tbody>
+        </table></div>
+      </section>
     </div>
   </div>
 </main>
@@ -180,6 +187,38 @@ async function loadQueue() {
 }
 const SYSKEY = id => ({ REQ: "requirements", PRT: "parts", TST: "tests" })[id.slice(0, 3)];
 
+const EXKIND = { dead_letter: "Failed message", approval_overdue: "Sign-off overdue", untraced_change: "No trace links" };
+let lastExHtml = "";
+async function loadExceptions() {
+  const [list, m] = await Promise.all([api("/exceptions?state=open"), api("/exceptions/metrics")]);
+  $("#exCount").textContent = m.open ? `${m.open} open · oldest ${m.oldest_open_hours} h` : "None open";
+  if (document.querySelector("#exceptions input")) return;  // a dismissal note is being typed
+  const html = list.length ? list.map(x => `
+    <tr data-ex="${x.id}"><td><span class="state state-${x.kind === "dead_letter" ? "rejected" : "in_review"}">${EXKIND[x.kind]}</span></td>
+      <td class="row-label mono">${x.entity.startsWith("CR-") ? "#" + x.entity.slice(3) : "event " + x.entity.slice(0, 8)}</td>
+      <td class="via">${esc(x.summary)}</td><td class="hide-sm">${esc(x.owner)}</td>
+      <td><div class="cell-actions">${x.kind === "dead_letter" ? `<button class="btn btn-sm btn-primary" data-retry="${x.id}">Retry</button>` : ""}
+        <button class="btn btn-sm btn-outline" data-dismiss="${x.id}">Dismiss</button></div></td></tr>`).join("")
+    : empty(5, "Nothing stalled or failed");
+  if (html === lastExHtml) return;
+  lastExHtml = html;
+  $("#exceptions").innerHTML = html;
+  const resolve = async (id, action, note = "") => {
+    try { await api(`/exceptions/${id}/resolve`, { method: "POST", body: JSON.stringify({ action, by: $("#who").value, note }) }); }
+    catch (e) { showErr(e); }
+    lastExHtml = ""; $("#exceptions").innerHTML = "";
+    loadExceptions(); loadAuditBadge(); loadQueue();
+  };
+  document.querySelectorAll("button[data-retry]").forEach(b => b.onclick = () => resolve(+b.dataset.retry, "retry"));
+  document.querySelectorAll("button[data-dismiss]").forEach(b => b.onclick = () => {
+    const cell = b.parentElement;
+    cell.innerHTML = `<input placeholder="Why it's safe to close" style="min-width:10rem;padding:0.3rem;border:1px solid var(--border);border-radius:3px">
+      <button class="btn btn-sm btn-primary">Close</button>`;
+    cell.querySelector("button").onclick = () => resolve(+b.dataset.dismiss, "dismiss", cell.querySelector("input").value);
+    cell.querySelector("input").focus();
+  });
+}
+
 async function loadAuditBadge() {
   const v = await api("/audit/verify");
   $("#auditBadge").innerHTML = v.valid ? `<span class="audit-ok">Change log intact &middot; ${v.rows_checked} entries</span>`
@@ -212,7 +251,7 @@ function renderImpact(items) {
 async function show(id) {
   selected = id;
   const [d, log] = await Promise.all([api(`/changes/${id}`), api(`/audit?entity=CR-${id}`)]);
-  loadQueue(); loadAuditBadge();
+  loadQueue(); loadAuditBadge(); loadExceptions();
   const done = d.approvals.filter(a => a.decision).length;
   renderHero(`Change #${d.id} · ${d.source === "detected" ? "Opened automatically when the part was edited" : "Filed by " + d.requested_by}`,
              `${d.target.title}`, d.state, d.impacted, `${done} of ${d.approvals.length}`, d.description);
@@ -257,7 +296,7 @@ $("#file").onclick = async () => {
 $("#preview").onclick = () => preview($("#target").value).catch(showErr);
 
 (async () => {
-  await loadItems(); loadAuditBadge();
+  await loadItems(); loadAuditBadge(); loadExceptions();
   const crs = await loadQueue();
   crs.length ? show(crs[0].id) : preview("PRT-122");
 })();

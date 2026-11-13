@@ -24,13 +24,14 @@ means a test that should have been re-run wasn't. Full write-up with an illustra
 | Event-driven | Revising an item writes an `item.changed` event to an outbox **in the same transaction**; a worker opens and assesses a change request automatically |
 | Reliable processing | Idempotent consumer (a redelivered event is skipped), 3 retries, then a dead-letter queue |
 | Approval routing | Approvers = the owner of the changed item and of every impacted item, plus Configuration Management. One rejection rejects |
+| Exception queue | Failed messages, sign-offs past 5 days and changes to untraced items open an owned exception automatically. Retry a failed message, or dismiss with a required note; overdue items close themselves when the change does. Open count, oldest age and median time to resolve at `/exceptions/metrics` |
 | Audit trail | Append-only (DB triggers block UPDATE/DELETE) and SHA-256 hash-chained; `GET /audit/verify` detects tampering |
 
 ## Run it
 ```bash
 pip install -r requirements-dev.txt
 uvicorn cie.api:create_app --factory          # open http://127.0.0.1:8000  (API docs at /docs)
-pytest                                         # 13 tests
+pytest                                         # 18 tests
 ```
 Or with Docker (non-root, read-only filesystem, all capabilities dropped):
 ```bash
@@ -56,9 +57,10 @@ cie/impact.py    recursive impact queries
 cie/events.py    outbox, idempotent worker, retries, dead letter
 cie/changes.py   change requests, approval routing, decisions
 cie/audit.py     hash-chained audit log and verification
+cie/exceptions.py  exception queue: open, assign, retry or dismiss, overdue scan, metrics
 cie/api.py       FastAPI app: three systems of record + engine
 cie/static/      one-screen review page
-tests/           impact rules, lifecycle, idempotency, dead-letter, tamper detection
+tests/           impact rules, lifecycle, idempotency, dead-letter, exception queue, tamper detection
 docs/            spec, business case, plan
 ```
 
